@@ -1,0 +1,398 @@
+---
+title: "Eye-tracking during reading at high and low sampling rates" 
+format:
+  poster-typst:
+    size: "33x47" # You can adjust this if needed
+    poster-authors: "Bernhard Angele^1^, Zeynep Gunes Ozkan^2^, Marina Serrano-Carot^1^, and Jon Andoni Duñabeitia^1^"
+    departments: "^1^Universidad Nebrija; ^2^University of Valencia"
+    poster-font: "Ubuntu Sans" 
+    header-line-color: "000000"
+    header-background-color: "C2002F"
+    header-text-color: "FFFFFF"
+    univ-logo: "./images/nebrija.png" # Replace with your logo
+    univ-image: "./images/CINC.png" # Replace with your image
+    univ-logo-column-size: 3 
+    univ-logo-scale: 100 
+    title-column-size: 25
+    title-font-size: 72 
+    authors-font-size: 36 
+    univ-image-column-size: 4
+    univ-image-scale: 100 
+    footer-text: "SEPEX 2024 - October 2024, Almería" # Add your conference name
+    footer-emails: "bangele1@nebrija.es" # Add your email
+    footer-background-color: "C2002F" # Choose your color
+    footer-text-color: "FFFFFF"
+    footer-url: "Poster URL or QR code" # Add a link or QR code
+    footer-url-font-size: 24
+fig-format: svg
+csl: "apa.csl"
+bibliography: references.bib
+---
+
+
+```{r setup}
+#| cache: false
+#| echo: FALSE
+#| warning: FALSE
+#set.seed(42)
+knitr::opts_chunk$set(cache = FALSE)
+knitr::opts_chunk$set(cache.lazy = FALSE)
+knitr::opts_chunk$set(error = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
+
+library(Cairo)
+library(brms)
+library(tidybayes)
+
+library(sjPlot)
+library(R.utils)
+
+library(gt)
+library(gtExtras)
+library(extrafont)
+suppressMessages(library(tidyverse))
+library(qs)
+library(countrycode)
+library(cartogram)
+library(sf)
+library(tmap)
+library(saccades)
+#library(plotly)
+library(showtext)
+showtext_auto()
+#x11(type="cairo")
+
+iterations = 1
+
+library(modelsummary)
+
+# to get fonts looking better in the plots on windows
+#loadfonts(device="win")
+
+theme_set(theme_sjplot())
+
+# read functions for processing data
+R.utils::sourceDirectory("../../functions/R/", modifiedOnly=TRUE);
+
+load("../../words_espal_frequencies.RData")
+
+
+# function to read scopus text files with publication counts by country
+read_scopus_text_files <- function(file_path) {
+  raw_lines <- raw_lines <- readLines(file_path) 
+  csv_pattern <- "^\"[^\"]+\",\"\\d+\"$"  # Country name in quotes, comma, number in quotes
+  valid_lines <- raw_lines[grepl(csv_pattern, raw_lines)]
+  read_csv(I(valid_lines), col_names = c("Countries", "Record Count"), col_types = cols(
+  Countries = col_character(),
+  `Record Count` = col_double()))
+}
+
+data("World")
+
+# function to plot a map of the world with publication counts by country, either as a choropleth or a cartogram
+plot_publications_map <- function(pubs_data, map_type = "auto", max_iterations = 5) {
+    world_map <- st_transform(World, crs = "ESRI:54030")
+    world_map <- world_map %>% filter(name != "Antarctica")
+    
+    pubs_data_with_iso3c <- pubs_data %>% 
+      mutate(iso_a3 = countrycode(Countries, origin = "country.name", destination = "iso3c"),
+             pub_record_count = `Record Count`)
+    
+    world_map <- left_join(world_map, pubs_data_with_iso3c, by = "iso_a3")
+    
+    if (map_type == "auto") {
+      if (sum(!is.na(world_map$pub_record_count)) > 50) {
+        map_type <- "cartogram"
+      } else {
+        map_type <- "choropleth"
+      }
+    }
+    
+    if (map_type == "cartogram") {
+      world_map_cartogram <- cartogram_cont(
+        x = world_map %>% mutate(pub_record_count = ifelse(!is.na(pub_record_count), pub_record_count, 1)),
+        weight = "pub_record_count", itermax = max_iterations
+      )
+      ggplot(world_map_cartogram) +
+        geom_sf(aes(fill = pub_record_count)) +
+        scale_fill_distiller() +
+        theme_minimal() +
+        theme(legend.position = "bottom") +
+        labs(title = "Publications by Country") +
+        guides(fill=guide_colorbar(title="Number of publications"))
+      #tm_shape(world_map_cartogram) + 
+      #  tm_polygons("pub_record_count", style = "jenks",  title = "Publications by Country") +
+      #  tm_layout(frame = FALSE, legend.position = c("left", "bottom"))
+    } else {
+      ggplot(world_map) +
+        geom_sf(aes(fill = pub_record_count)) +
+        scale_fill_distiller() +
+        theme_minimal() +
+        theme(legend.position = "bottom") +
+        labs(title = "Publications by Country") +
+        guides(fill=guide_colorbar(title="Number of publications"))
+    }
+  }
+
+```
+
+# Introduction
+
+## Eye movements are a window into the reading process
+
+-   Recording eye movements has led to a wealth of findings about the cognitive processes involved in reading
+-   However, if we examine the eye-movement literature, we find that most results come from a small number of countries and involve reading in a limited number of languages
+
+## Illustrating the eye-movement gap
+
+-   Data from Scopus: Searching for "eye" and "track(er/ing)" or "movement(s)" and "reading" in the title, abstract, and keywords
+-   Publications from 1974 to 2024
+-   Counting country affiliations by author (publications can have multiple authors and author affiliations)
+-   Excluding affiliations with missing country names
+-   Details: @Angele2024
+
+## Publications over time: 1974 -- 2000
+
+```{r plot_publications_1974_2000_cartogram}
+#| cache: true
+#| echo: FALSE
+#| warning: FALSE
+#| fig.cap: "Cartogram of publications from 1974 to 2000"
+#| fig.align: "center"
+#| fig.width: 9
+#| fig.height: 5
+
+pubs_data_1974_2000 <- read_scopus_text_files("../../eye_movement_publication_statistics/Scopus-reading_1974_2000.csv")
+plot_publications_map(pubs_data_1974_2000, map_type = "cartogram", max_iterations = iterations) + scale_fill_viridis_c()
+```
+
+## Publications over time: 2001 -- 2010
+
+```{r plot_publications_2001_2010_cartogram}
+#| echo: FALSE
+#| warning: FALSE
+#| fig.cap: "Cartogram of publications from 2001 to 2010"
+#| fig.align: "center"
+#| fig.width: 9
+#| fig.height: 5
+#| cache: true
+# publications 2001-2010
+pubs_data_2001_2010 <- read_scopus_text_files("../../eye_movement_publication_statistics/Scopus-reading_2001_2010.csv")
+plot_publications_map(pubs_data_2001_2010, map_type = "cartogram", max_iterations = iterations) + scale_fill_viridis_c()
+```
+
+## Publications over time: 2011 -- 2020
+
+```{r plot_publications_2011_2020_cartogram}
+#| echo: FALSE
+#| warning: FALSE
+#| fig.cap: "Cartogram of publications from from 2011 to 2020"
+#| fig.align: "center"
+#| fig.width: 9
+#| fig.height: 5
+#| cache: true
+
+# publications 2011-2020
+pubs_data_2011_2020 <- read_scopus_text_files("../../eye_movement_publication_statistics/Scopus-reading_2011_2020.csv")
+plot_publications_map(pubs_data_2011_2020, map_type = "cartogram", max_iterations = iterations) + scale_fill_viridis_c()
+```
+
+## Publications over time: 2021 -- 2024
+
+```{r plot_publications_2021_2024_cartogram}
+#| echo: FALSE
+#| warning: FALSE
+#| fig.cap: "Cartogram of publications from 2021 to 2024"
+#| fig.align: "center"
+#| fig.width: 9
+#| fig.height: 5
+#| cache: true
+
+# publications 2021-2024
+pubs_data_2021_2024 <- read_scopus_text_files("../../eye_movement_publication_statistics/Scopus-reading_2021_2024.csv")
+plot_publications_map(pubs_data_2021_2024, map_type = "cartogram", max_iterations = iterations) + scale_fill_viridis_c()
+```
+
+## What are we missing?
+
+-   General issue of WEIRD research [@henrich2010]: Western participants may not be representative of all readers or even the majority of readers
+
+-   English, German, French, Spanish, Italian etc. are similar languages in many respects and all share the same writing system
+
+-   Studying Chinese reading has forced us to think about new issues such as word segmentation, processing of character components and many more.
+
+
+# Our study
+
+## Our approach
+
+-   We take a practical approach: Which is the lowest sampling rate that allows us to find evidence of cognitive processing?
+-   We need a benchmark effect -- a phenomenon that is well-studied and whose existence (and effect size) is clear
+-   The word frequency effect on fixation duration is ideal for this
+
+## Method {.smaller}
+
+```{r word_info}
+#| warning: FALSE
+#| echo: FALSE
+load("../../words_espal_frequencies.RData")
+mean_freq <- sentences_words_espal %>% filter(target_word == TRUE) %>% group_by(frequency_condition) %>% summarize(frequency = mean(frq))
+```
+
+-   32 participants read 400 sentences in Spanish
+
+-   Eye movements are recorded by an SR Research Eyelink Portable Duo
+
+-   Four sampling rates 250 Hz, 500 Hz, 1000 Hz, and 2000 Hz (100 sentences each)
+
+-   Frequency manipulation: each sentence has a target word that was manipulated to be either
+
+    -   high frequency (mean frequency `r round(mean_freq %>% filter(frequency_condition == "sentence_high") %>% .$frequency)`/million)
+
+    -   low frequency (mean frequency `r round(mean_freq %>% filter(frequency_condition == "sentence_low") %>% .$frequency)`/million)
+
+-   The context up to the target word was identical for both versions of the sentence.
+
+    -   Context after the target word was allowed to vary.
+
+# Results
+
+
+```{r plot_1000_hz_samples}
+#| echo: false
+#| cache: true
+#| warning: FALSE
+#| fig.cap: "Example trial at 1000 Hz"
+#| fig.align: "center"
+#| fig.width: 9
+#| fig.height: 2
+
+
+sub1000 <- qread("../../sampling_rate_subjects_1000.qs")
+
+example_sub_nr = 14
+example_trial_nr = 95
+
+plot_1000 <- plot_trial(sub1000[[example_sub_nr]], trial_nr = example_trial_nr, 
+           show_original_samples = TRUE,show_downsampled_samples = FALSE,downsampling_rate = 1000,show_eyelink_fixations = TRUE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = FALSE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(90,1300), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
+
+plot_1000
+```
+
+## Example trial 250 Hz
+
+-   With Eyelink fixations
+
+```{r plot_250_hz_trial_eyelink_EK}
+#| echo: false
+#| cache: true
+#| warning: false
+#| fig.cap: "Example trial at 250 Hz"
+#| fig.align: "center"
+#| fig.width: 9
+#| fig.height: 2
+
+sub250 <- qread("../../sampling_rate_subjects_250.qs")
+
+plot_250 <- plot_trial(sub250[[14]], trial_nr = 90, 
+           show_original_samples = TRUE,show_downsampled_samples = FALSE,downsampling_rate = 250,show_eyelink_fixations = TRUE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = FALSE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(90,1300), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
+
+plot_250
+```
+
+```{r plot_1000_hz_trial_downsampled_with_fixations}
+#| echo: false
+#| cache: true
+#| message: false
+#| warning: false
+#| fig.cap: "Example 1000 Hz trial downsampled to 50 Hz"
+#| fig.align: "center"
+#| fig.width: 9
+#| fig.height: 2
+
+plot_1000_downsampled <- plot_trial(sub1000[[example_sub_nr]], trial_nr = example_trial_nr, 
+           show_original_samples = FALSE,show_downsampled_samples = TRUE,downsampling_rate = 50,show_eyelink_fixations = FALSE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = TRUE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(0,1100), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
+ 
+
+plot_1000_downsampled
+```
+
+# Discussion
+
+We will start with a random **math** equation, just to show that quarto and typst can do _math_. Now some random text so that the yellow box spans two columns. Ut enim aeque doleamus animo, cum corpore dolemus, fieri tamen permagna accessio potest, si aliquod aeternum et infinitum impendere malum nobis opinemur.We will put this next part in a **maize-colored box** to make it stand out.
+
+::: {.block fill=rgb("FFCB05") inset="10pt" radius="4pt" stroke="2pt + black" } 
+
+
+$$
+\sum_(k=1)^n k = \frac{(n(n+1))}{2} = \frac{(n^2 + n)}{2}
+$$
+
+- That was a math equation bracketed by $ (which invokes the math translator), notice that the box extends across column breaks. Watch the indent when this extends across a whole line. Note that this box does not have a lot of inset padding, unlike the gray box below, where the text can 'breathe'. 
+- Also notice how rounded the corners are (radius) in the two different boxes.
+- Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
+
+:::
+\
+\
+\
+\
+\
+\
+
+## Implications in a Gray Box \ 
+## (0[black]-255[white]) with \
+## a Blue Border
+
+\
+
+::: {.block fill="luma(210)" inset="25pt" radius="15pt" stroke="5pt + blue"}
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim aeque doleamus animo, cum corpore dolemus, fieri tamen permagna accessio potest, si aliquod aeternum et infinitum impendere malum nobis opinemur. 
+
+:::
+
+Now inserting another plot and controlling the height and width in inches on this 72 in poster. Note the backslash (for a line break) is used on a line by itself to give us a bit of separation between the text and the plot.
+\
+
+```{r}
+#| echo: FALSE
+#| fig.cap: "A fabulous plot made in R."
+#| fig.align: "center"
+#| fig.width: 9
+#| fig.height: 5
+palmerpenguins::penguins |> 
+  ggplot(aes(x = species, fill = species)) +
+  geom_bar() +
+  theme_minimal(base_size = 32) +
+  labs(title = 'Penguin Species Distribution')
+```
+
+
+\
+
+# Next Steps
+
+::: {.block fill=rgb("#D2F1FE") inset="10pt" radius="4pt" stroke="2pt + black" } 
+1. We will do amazing research in vitro with cell lines in petri dishes
+1. We will extend this with in vivo studies in mice and rats.
+1. We will then extend this with pig studies
+1. We will then move to human clinical trials.
+1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
+1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
+1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
+:::
+
+\
+
+# To Infinity and Beyond
+
+::: {.block fill=rgb("#99EDC3") inset="10pt" radius="4pt" stroke="2pt + black" } 
+1. We will do amazing research in vitro with cell lines in petri dishes
+1. We will extend this with in vivo studies in mice and rats.
+1. We will then extend this with pig studies
+1. We will then move to human clinical trials.
+1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
+1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
+1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
+:::
