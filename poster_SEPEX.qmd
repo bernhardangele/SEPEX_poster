@@ -5,7 +5,7 @@ format:
     size: "33x47" # You can adjust this if needed
     poster-authors: "Bernhard Angele^1^, Zeynep Gunes Ozkan^2^, Marina Serrano-Carot^1^, and Jon Andoni Duñabeitia^1^"
     departments: "^1^Universidad Nebrija; ^2^University of Valencia"
-    poster-font: "Ubuntu Sans" 
+    poster-font: "Hind" 
     header-line-color: "000000"
     header-background-color: "C2002F"
     header-text-color: "FFFFFF"
@@ -28,7 +28,6 @@ fig-format: svg
 csl: "apa.csl"
 bibliography: references.bib
 ---
-
 
 ```{r setup}
 #| cache: false
@@ -138,20 +137,16 @@ plot_publications_map <- function(pubs_data, map_type = "auto", max_iterations =
 
 # Introduction
 
-## Eye movements are a window into the reading process
-
--   Recording eye movements has led to a wealth of findings about the cognitive processes involved in reading
--   However, if we examine the eye-movement literature, we find that most results come from a small number of countries and involve reading in a limited number of languages
+-   Eye movements are a window into the reading process.
+-   However, if we examine the eye-movement literature, we find that most results come from a small number of countries and involve reading in a limited number of languages.
 
 ## Illustrating the eye-movement gap
 
--   Data from Scopus: Searching for "eye" and "track(er/ing)" or "movement(s)" and "reading" in the title, abstract, and keywords
+-   Data from Scopus: Searching for "eye" and "track(er/ing)" or "movement(s)" and "reading" in the title, abstract, and keywords [@Angele2024]
 -   Publications from 1974 to 2024
--   Counting country affiliations by author (publications can have multiple authors and author affiliations)
--   Excluding affiliations with missing country names
--   Details: @Angele2024
+-   Counting country affiliations by author (publications can have multiple authors and author affiliations), excluding affiliations with missing country names
 
-## Publications over time: 1974 -- 2000
+## Publications over time
 
 ```{r plot_publications_1974_2000_cartogram}
 #| cache: true
@@ -165,8 +160,6 @@ plot_publications_map <- function(pubs_data, map_type = "auto", max_iterations =
 pubs_data_1974_2000 <- read_scopus_text_files("../../eye_movement_publication_statistics/Scopus-reading_1974_2000.csv")
 plot_publications_map(pubs_data_1974_2000, map_type = "cartogram", max_iterations = iterations) + scale_fill_viridis_c()
 ```
-
-## Publications over time: 2001 -- 2010
 
 ```{r plot_publications_2001_2010_cartogram}
 #| echo: FALSE
@@ -197,8 +190,6 @@ pubs_data_2011_2020 <- read_scopus_text_files("../../eye_movement_publication_st
 plot_publications_map(pubs_data_2011_2020, map_type = "cartogram", max_iterations = iterations) + scale_fill_viridis_c()
 ```
 
-## Publications over time: 2021 -- 2024
-
 ```{r plot_publications_2021_2024_cartogram}
 #| echo: FALSE
 #| warning: FALSE
@@ -220,7 +211,6 @@ plot_publications_map(pubs_data_2021_2024, map_type = "cartogram", max_iteration
 -   English, German, French, Spanish, Italian etc. are similar languages in many respects and all share the same writing system
 
 -   Studying Chinese reading has forced us to think about new issues such as word segmentation, processing of character components and many more.
-
 
 # Our study
 
@@ -257,8 +247,8 @@ mean_freq <- sentences_words_espal %>% filter(target_word == TRUE) %>% group_by(
 
 # Results
 
-
 ```{r plot_1000_hz_samples}
+#| message: false
 #| echo: false
 #| cache: true
 #| warning: FALSE
@@ -279,11 +269,8 @@ plot_1000 <- plot_trial(sub1000[[example_sub_nr]], trial_nr = example_trial_nr,
 plot_1000
 ```
 
-## Example trial 250 Hz
-
--   With Eyelink fixations
-
 ```{r plot_250_hz_trial_eyelink_EK}
+#| message: false
 #| echo: false
 #| cache: true
 #| warning: false
@@ -317,22 +304,60 @@ plot_1000_downsampled <- plot_trial(sub1000[[example_sub_nr]], trial_nr = exampl
 plot_1000_downsampled
 ```
 
+## Bayesian LMMs
+
+```{r bayes_plot_el_gd}
+#| echo: false
+#| cache: true
+#| message: false
+#| warning: false
+#| fig.cap: "Evidence for frequency effect in GD on the target word by sampling rate (Eyelink)"
+#| fig.align: "center"
+#| fig.width: 9
+#| fig.height: 2
+
+
+brm_el_gd_250 <- qread("../../brm_el_gd_250_all_sentences.qs")
+
+brm_el_gd_500 <- qread("../../brm_el_gd_500_all_sentences.qs")
+
+brm_el_gd_1000 <- qread("../../brm_el_gd_1000_all_sentences.qs")
+
+brm_el_gd_2000 <- qread("../../brm_el_gd_2000_all_sentences.qs")
+
+brm_el_gd_all <- rbind(brm_el_gd_250 %>% gather_draws(b_condition1) %>% mutate(rate = 250),
+                        brm_el_gd_500 %>% gather_draws(b_condition1) %>% mutate(rate = 500),
+                        brm_el_gd_1000 %>% gather_draws(b_condition1) %>% mutate(rate = 1000),
+                        brm_el_gd_2000 %>% gather_draws(b_condition1) %>% mutate(rate = 2000)) 
+
+
+brmplot_gd <- brm_el_gd_all %>% filter(.variable == "b_condition1") %>%
+  ggplot(aes(y = factor(rate), x = .value, fill = after_stat(x > 0))) +
+  stat_halfeye() + geom_vline(xintercept = 0, linetype = "dashed", color = "gray40") + geom_label(data = brm_el_gd_all %>%
+              filter(.variable == "b_condition1") %>%
+              group_by(rate) %>%
+              summarize(proportion_below_zero = mean(.value < 0)),
+            aes(label = sprintf("%.2f", proportion_below_zero), x = 0, y = factor(rate)),
+            hjust = -1.5, vjust = -1.5, color = "black", size = 4) + labs(title = "Posterior distribution for frequency effect coefficient", subtitle = "log(GD) on the target word", x = "Value", y = "Sampling rate (Hz)", caption = "Coefficient can be interpreted as the difference between high and low frequency target words.\nRed box gives proportion of posterior distribution < 0") + theme(legend.position = "none")
+
+brmplot_gd
+
+```
+
 # Discussion
 
-We will start with a random **math** equation, just to show that quarto and typst can do _math_. Now some random text so that the yellow box spans two columns. Ut enim aeque doleamus animo, cum corpore dolemus, fieri tamen permagna accessio potest, si aliquod aeternum et infinitum impendere malum nobis opinemur.We will put this next part in a **maize-colored box** to make it stand out.
+We will start with a random **math** equation, just to show that quarto and typst can do *math*. Now some random text so that the yellow box spans two columns. Ut enim aeque doleamus animo, cum corpore dolemus, fieri tamen permagna accessio potest, si aliquod aeternum et infinitum impendere malum nobis opinemur.We will put this next part in a **maize-colored box** to make it stand out.
 
-::: {.block fill=rgb("FFCB05") inset="10pt" radius="4pt" stroke="2pt + black" } 
-
-
+::: {.block fill="rgb(\"FFCB05\")" inset="10pt" radius="4pt" stroke="2pt + black"}
 $$
 \sum_(k=1)^n k = \frac{(n(n+1))}{2} = \frac{(n^2 + n)}{2}
 $$
 
-- That was a math equation bracketed by $ (which invokes the math translator), notice that the box extends across column breaks. Watch the indent when this extends across a whole line. Note that this box does not have a lot of inset padding, unlike the gray box below, where the text can 'breathe'. 
-- Also notice how rounded the corners are (radius) in the two different boxes.
-- Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
-
+-   That was a math equation bracketed by \$ (which invokes the math translator), notice that the box extends across column breaks. Watch the indent when this extends across a whole line. Note that this box does not have a lot of inset padding, unlike the gray box below, where the text can 'breathe'.
+-   Also notice how rounded the corners are (radius) in the two different boxes.
+-   Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
 :::
+
 \
 \
 \
@@ -340,20 +365,19 @@ $$
 \
 \
 
-## Implications in a Gray Box \ 
-## (0[black]-255[white]) with \
+## Implications in a Gray Box  
+
+## (0\[black\]-255\[white\]) with
+
 ## a Blue Border
 
 \
 
 ::: {.block fill="luma(210)" inset="25pt" radius="15pt" stroke="5pt + blue"}
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim aeque doleamus animo, cum corpore dolemus, fieri tamen permagna accessio potest, si aliquod aeternum et infinitum impendere malum nobis opinemur. 
-
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim aeque doleamus animo, cum corpore dolemus, fieri tamen permagna accessio potest, si aliquod aeternum et infinitum impendere malum nobis opinemur.
 :::
 
-Now inserting another plot and controlling the height and width in inches on this 72 in poster. Note the backslash (for a line break) is used on a line by itself to give us a bit of separation between the text and the plot.
-\
+Now inserting another plot and controlling the height and width in inches on this 72 in poster. Note the backslash (for a line break) is used on a line by itself to give us a bit of separation between the text and the plot.\
 
 ```{r}
 #| echo: FALSE
@@ -368,31 +392,30 @@ palmerpenguins::penguins |>
   labs(title = 'Penguin Species Distribution')
 ```
 
-
 \
 
 # Next Steps
 
-::: {.block fill=rgb("#D2F1FE") inset="10pt" radius="4pt" stroke="2pt + black" } 
-1. We will do amazing research in vitro with cell lines in petri dishes
-1. We will extend this with in vivo studies in mice and rats.
-1. We will then extend this with pig studies
-1. We will then move to human clinical trials.
-1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
-1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
-1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
+::: {.block fill="rgb(\"#D2F1FE\")" inset="10pt" radius="4pt" stroke="2pt + black"}
+1.  We will do amazing research in vitro with cell lines in petri dishes
+2.  We will extend this with in vivo studies in mice and rats.
+3.  We will then extend this with pig studies
+4.  We will then move to human clinical trials.
+5.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
+6.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
+7.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
 :::
 
 \
 
 # To Infinity and Beyond
 
-::: {.block fill=rgb("#99EDC3") inset="10pt" radius="4pt" stroke="2pt + black" } 
-1. We will do amazing research in vitro with cell lines in petri dishes
-1. We will extend this with in vivo studies in mice and rats.
-1. We will then extend this with pig studies
-1. We will then move to human clinical trials.
-1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
-1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
-1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
+::: {.block fill="rgb(\"#99EDC3\")" inset="10pt" radius="4pt" stroke="2pt + black"}
+1.  We will do amazing research in vitro with cell lines in petri dishes
+2.  We will extend this with in vivo studies in mice and rats.
+3.  We will then extend this with pig studies
+4.  We will then move to human clinical trials.
+5.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
+6.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
+7.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
 :::
