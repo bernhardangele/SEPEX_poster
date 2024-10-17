@@ -21,12 +21,18 @@
   $if(poster-authors)$ authors: [$poster-authors$], $endif$
   $if(departments)$ departments: [$departments$], $endif$
   $if(size)$ size: "$size$", $endif$
+  
+  $if(header-line-color)$ header_line_color: "$header-line-color$", $endif$
+  $if(header-background-color)$ header_background_color: "$header-background-color$", $endif$
+  $if(header-text-color)$ header_text_color: "$header-text-color$", $endif$
+  
+  $if(poster-font)$ poster_font: "$poster-font$", $endif$
 
   // Institution logo.
-  $if(institution-logo)$ univ_logo: "$institution-logo$", $endif$
+  $if(univ-logo)$ univ_logo: "$univ-logo$", $endif$
 
   // Institution image.
-  $if(institution-image)$ univ_image: "$institution-image$", $endif$
+  $if(univ-image)$ univ_image: "$univ-image$", $endif$
   
   // Footer text.
   // For instance, Name of Conference, Date, Location.
@@ -43,7 +49,9 @@
   $if(header-color)$ header-color: "$header-color$", $endif$
   
   // Color of the footer.
-  $if(footer-color)$ footer_color: "$footer-color$", $endif$
+  $if(footer-background-color)$ footer_background_color: "$footer-background-color$", $endif$
+  $if(footer-text-color)$ footer_text_color: "$footer-text-color$", $endif$
+  
 
   // DEFAULTS
   // ========

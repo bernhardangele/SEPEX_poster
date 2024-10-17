@@ -1,5 +1,13 @@
 
 #let poster(
+  // Color of the header
+  header_line_color: "Hex Color Code",
+  header_background_color: "Hex Color Code",
+  header_text_color: "Hex Color Code",
+  
+  // Poster font
+  poster_font: "Font Name",
+
   // The poster's size.
   size: "'36x24' or '48x36' or '72x30'",
 
@@ -13,10 +21,10 @@
   departments: "Department Name",
 
   // University logo.
-  univ_logo: "Logo Path",
+  univ_logo: "",
   
   // University image.
-  univ_image: "./images/UMhospital.jpeg",
+  univ_image: "",
 
   // Footer text.
   // For instance, Name of Conference, Date, Location.
@@ -30,7 +38,8 @@
   footer_email_ids: "Email IDs (separated by commas)",
 
   // Color of the footer.
-  footer_color: "Hex Color Code",
+  footer_background_color: "Hex Color Code",
+  footer_text_color: "Hex Color Code",
 
   // DEFAULTS
   // ========
@@ -75,8 +84,8 @@
   // The poster's content.
   body
 ) = {
-  // Set the body font. Use a Google Font you like. Set size. Here we used Open Sans.
-  set text(font: "Open Sans", size: 32pt) // Can change to 12pt for small size
+  // Set the body font. Use a Google Font you like. Set size.
+  set text(font: poster_font, size: 32pt) // Can change to 12pt for small size
   let sizes = size.split("x")
   let width = int(sizes.at(0)) * 1in
   let height = int(sizes.at(1)) * 1in
@@ -101,22 +110,22 @@
     width: width,
     height: height,
     margin: 
-      (top: 1in, left: 1in, right: 1in, bottom: 1in),
+      (top: 1in, left: 1in, right: 1in, bottom: 2in),
     footer: [
       #set align(center)
       #set text(32pt) // altered for 72 x 30
       #block(
-        fill: rgb(footer_color),
+        fill: rgb(footer_background_color),
         width: 100%,
         inset: 20pt,
         radius: 10pt,
     // note fonts modifiable in the footer
         [
-          #text(size: footer_text_font_size, smallcaps(footer_text)) 
+          #text(size: footer_text_font_size, fill: rgb(footer_text_color), smallcaps(footer_text)) 
           #h(1fr) 
-          #text(font: "Open Sans", size: footer_url_font_size, footer_url) 
+          #text(font: poster_font, fill: rgb(footer_text_color), size: footer_url_font_size, footer_url) 
           #h(1fr) 
-          #text(font: "Open Sans", size:  footer_url_font_size, footer_email_ids)
+          #text(font: poster_font, fill: rgb(footer_text_color), size:  footer_url_font_size, footer_email_ids)
         ]
       )
     ]
@@ -161,13 +170,13 @@
       // Second-level headings are run-ins.
       // italic, 32 pt, numbered w/letters
       #set text(style: "italic", weight: 600)
-      #v(32pt, weak: true)
+      #v(40pt, weak: true)
       #if it.numbering != none {
         // removed numbering from subheadings
         h(7pt, weak: true)
       }
       #it.body
-      #v(10pt, weak: true)
+      #v(20pt, weak: true)
     ] else [
       // Third level headings are run-ins too, but different.
       #if it.level == 3 {
@@ -190,12 +199,12 @@
       column-gutter: 5pt,
       row-gutter: 5pt,
       image(univ_logo, width: univ_logo_scale),
-      box(stroke: rgb("#ffcb05") + 10pt, 
-          fill: rgb("#00274c"),
+      box(stroke: rgb(header_line_color) + 10pt, 
+          fill: rgb(header_background_color),
             text(title_font_size, title + "\n", 
-            fill: rgb("#ffcb05")) + 
+            fill: rgb(header_text_color)) + 
             text(authors_font_size, emph("\n" + authors) + 
-            "\n" + departments, fill: rgb("#ffcb05")), 
+            "\n" + departments, fill: rgb(header_text_color)), 
           radius: 15pt, inset: 30pt),
       image(univ_image, width: univ_image_scale)
     )
