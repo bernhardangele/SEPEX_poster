@@ -22,7 +22,7 @@ format:
     footer-emails: "bangele1@nebrija.es" # Add your email
     footer-background-color: "C2002F" # Choose your color
     footer-text-color: "FFFFFF"
-    footer-url: "Poster URL or QR code" # Add a link or QR code
+    footer-url: "This research has been supported by Grant 2022-T1/SOC-23980 from the Community of Madrid." # Add a link or QR code
     footer-url-font-size: 24
 fig-format: svg
 csl: "apa.csl"
@@ -30,14 +30,14 @@ bibliography: references.bib
 ---
 
 ```{r setup}
-#| cache: false
+#| cache: true  
 #| echo: FALSE
 #| warning: FALSE
 #set.seed(42)
-knitr::opts_chunk$set(cache = FALSE)
-knitr::opts_chunk$set(cache.lazy = FALSE)
-knitr::opts_chunk$set(error = TRUE)
-knitr::opts_chunk$set(echo = FALSE)
+#knitr::opts_chunk$set(cache = FALSE)
+#knitr::opts_chunk$set(cache.lazy = FALSE)
+#knitr::opts_chunk$set(error = TRUE)
+#knitr::opts_chunk$set(echo = FALSE)
 
 library(Cairo)
 library(brms)
@@ -314,7 +314,7 @@ plot_1000_downsampled
 #| fig.cap: "Evidence for frequency effect in GD on the target word by sampling rate (Eyelink)"
 #| fig.align: "center"
 #| fig.width: 9
-#| fig.height: 2
+#| fig.height: 5
 
 
 brm_el_gd_250 <- qread("../../brm_el_gd_250_all_sentences.qs")
