@@ -30,7 +30,7 @@ bibliography: references.bib
 ---
 
 ```{r setup}
-#| cache: true  
+#| cache: false  
 #| echo: FALSE
 #| warning: FALSE
 #set.seed(42)
@@ -210,7 +210,11 @@ plot_publications_map(pubs_data_2021_2024, map_type = "cartogram", max_iteration
 
 -   English, German, French, Spanish, Italian etc. are similar languages in many respects and all share the same writing system
 
--   Studying Chinese reading has forced us to think about new issues such as word segmentation, processing of character components and many more.
+## Why is there so little eye-movement research except in a few countries?
+
+-   Most expensive component: High-speed, high-resolution cameras
+-   Sampling rate is a key bottleneck
+-   Can we study reading at lower sampling rates?
 
 # Our study
 
@@ -247,6 +251,8 @@ mean_freq <- sentences_words_espal %>% filter(target_word == TRUE) %>% group_by(
 
 # Results
 
+## Trials
+
 ```{r plot_1000_hz_samples}
 #| message: false
 #| echo: false
@@ -255,16 +261,16 @@ mean_freq <- sentences_words_espal %>% filter(target_word == TRUE) %>% group_by(
 #| fig.cap: "Example trial at 1000 Hz"
 #| fig.align: "center"
 #| fig.width: 9
-#| fig.height: 2
+#| fig.height: 2.2
 
 
 sub1000 <- qread("../../sampling_rate_subjects_1000.qs")
 
-example_sub_nr = 14
-example_trial_nr = 95
+example_sub_nr = 15
+example_trial_nr = 60
 
 plot_1000 <- plot_trial(sub1000[[example_sub_nr]], trial_nr = example_trial_nr, 
-           show_original_samples = TRUE,show_downsampled_samples = FALSE,downsampling_rate = 1000,show_eyelink_fixations = TRUE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = FALSE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(90,1300), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
+           show_original_samples = TRUE,show_downsampled_samples = FALSE,downsampling_rate = 1000,show_eyelink_fixations = TRUE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = FALSE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(90,1200), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
 
 plot_1000
 ```
@@ -277,12 +283,12 @@ plot_1000
 #| fig.cap: "Example trial at 250 Hz"
 #| fig.align: "center"
 #| fig.width: 9
-#| fig.height: 2
+#| fig.height: 2.2
 
 sub250 <- qread("../../sampling_rate_subjects_250.qs")
 
-plot_250 <- plot_trial(sub250[[14]], trial_nr = 90, 
-           show_original_samples = TRUE,show_downsampled_samples = FALSE,downsampling_rate = 250,show_eyelink_fixations = TRUE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = FALSE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(90,1300), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
+plot_250 <- plot_trial(sub250[[31]], trial_nr = 27, 
+           show_original_samples = TRUE,show_downsampled_samples = FALSE,downsampling_rate = 250,show_eyelink_fixations = TRUE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = FALSE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(90,1200), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
 
 plot_250
 ```
@@ -292,19 +298,21 @@ plot_250
 #| cache: true
 #| message: false
 #| warning: false
-#| fig.cap: "Example 1000 Hz trial downsampled to 50 Hz"
+#| fig.cap: "1000 Hz trial downsampled to 50 Hz"
 #| fig.align: "center"
 #| fig.width: 9
-#| fig.height: 2
+#| fig.height: 2.2
 
 plot_1000_downsampled <- plot_trial(sub1000[[example_sub_nr]], trial_nr = example_trial_nr, 
-           show_original_samples = FALSE,show_downsampled_samples = TRUE,downsampling_rate = 50,show_eyelink_fixations = FALSE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = TRUE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(0,1100), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
+           show_original_samples = FALSE,show_downsampled_samples = TRUE,downsampling_rate = 50,show_eyelink_fixations = FALSE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = TRUE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(90,1200), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
  
 
 plot_1000_downsampled
 ```
 
 ## Bayesian LMMs
+
+#### Original data
 
 ```{r bayes_plot_el_gd}
 #| echo: false
@@ -344,78 +352,42 @@ brmplot_gd
 
 ```
 
-# Discussion
+#### Downsampled data
 
-We will start with a random **math** equation, just to show that quarto and typst can do *math*. Now some random text so that the yellow box spans two columns. Ut enim aeque doleamus animo, cum corpore dolemus, fieri tamen permagna accessio potest, si aliquod aeternum et infinitum impendere malum nobis opinemur.We will put this next part in a **maize-colored box** to make it stand out.
-
-::: {.block fill="rgb(\"FFCB05\")" inset="10pt" radius="4pt" stroke="2pt + black"}
-$$
-\sum_(k=1)^n k = \frac{(n(n+1))}{2} = \frac{(n^2 + n)}{2}
-$$
-
--   That was a math equation bracketed by \$ (which invokes the math translator), notice that the box extends across column breaks. Watch the indent when this extends across a whole line. Note that this box does not have a lot of inset padding, unlike the gray box below, where the text can 'breathe'.
--   Also notice how rounded the corners are (radius) in the two different boxes.
--   Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
-:::
-
-\
-\
-\
-\
-\
-\
-
-## Implications in a Gray Box  
-
-## (0\[black\]-255\[white\]) with
-
-## a Blue Border
-
-\
-
-::: {.block fill="luma(210)" inset="25pt" radius="15pt" stroke="5pt + blue"}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim aeque doleamus animo, cum corpore dolemus, fieri tamen permagna accessio potest, si aliquod aeternum et infinitum impendere malum nobis opinemur.
-:::
-
-Now inserting another plot and controlling the height and width in inches on this 72 in poster. Note the backslash (for a line break) is used on a line by itself to give us a bit of separation between the text and the plot.\
-
-```{r}
-#| echo: FALSE
-#| fig.cap: "A fabulous plot made in R."
+```{r bayes_plot_downsampled_ek_gd_100}
+#| echo: false
+#| cache: true
+#| message: false
+#| warning: false
+#| fig.cap: "PLACEHOLDER: Evidence for frequency effect in GD on the target word by sampling rate (downsampled data, 100 sentences per participant)"
 #| fig.align: "center"
 #| fig.width: 9
 #| fig.height: 5
-palmerpenguins::penguins |> 
-  ggplot(aes(x = species, fill = species)) +
-  geom_bar() +
-  theme_minimal(base_size = 32) +
-  labs(title = 'Penguin Species Distribution')
+
+
+brmplot_gd
 ```
 
-\
+```{r bayes_plot_downsampled_ek_gd_400}
+#| echo: false
+#| cache: true
+#| message: false
+#| warning: false
+#| fig.cap: "PLACEHOLDER: Evidence for frequency effect in GD on the target word by sampling rate (downsampled data, 400 sentences per participant)"
+#| fig.align: "center"
+#| fig.width: 9
+#| fig.height: 5
 
-# Next Steps
 
-::: {.block fill="rgb(\"#D2F1FE\")" inset="10pt" radius="4pt" stroke="2pt + black"}
-1.  We will do amazing research in vitro with cell lines in petri dishes
-2.  We will extend this with in vivo studies in mice and rats.
-3.  We will then extend this with pig studies
-4.  We will then move to human clinical trials.
-5.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
-6.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
-7.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
-:::
+brmplot_gd
+```
 
-\
+# Discussion
 
-# To Infinity and Beyond
-
-::: {.block fill="rgb(\"#99EDC3\")" inset="10pt" radius="4pt" stroke="2pt + black"}
-1.  We will do amazing research in vitro with cell lines in petri dishes
-2.  We will extend this with in vivo studies in mice and rats.
-3.  We will then extend this with pig studies
-4.  We will then move to human clinical trials.
-5.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
-6.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
-7.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.
+::: {.block fill="luma(210)" inset="25pt" radius="15pt" stroke="5pt + blue"}
+-   If you want to use affordable eye-trackers to study reading:
+    -   target effects that are large enough
+    -   choose aggregate measures (GD, TVT, go-past time, etc.)
+    -   plan to use a large sample
+    -   consider running a pilot study with a known effect (word frequency) and do a power analysis based on the results
 :::
