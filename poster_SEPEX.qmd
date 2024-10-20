@@ -27,6 +27,8 @@ format:
 fig-format: svg
 csl: "apa.csl"
 bibliography: references.bib
+citeproc: false
+bibliographystyle: "apa"
 ---
 
 ```{r setup}
@@ -261,16 +263,16 @@ mean_freq <- sentences_words_espal %>% filter(target_word == TRUE) %>% group_by(
 #| fig.cap: "Example trial at 1000 Hz"
 #| fig.align: "center"
 #| fig.width: 9
-#| fig.height: 2.2
+#| fig.height: 2
 
 
 sub1000 <- qread("../../sampling_rate_subjects_1000.qs")
 
-example_sub_nr = 15
-example_trial_nr = 60
+example_sub_nr = 27
+example_trial_nr = 57
 
 plot_1000 <- plot_trial(sub1000[[example_sub_nr]], trial_nr = example_trial_nr, 
-           show_original_samples = TRUE,show_downsampled_samples = FALSE,downsampling_rate = 1000,show_eyelink_fixations = TRUE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = FALSE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(90,1200), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
+           show_original_samples = TRUE,show_downsampled_samples = FALSE,downsampling_rate = 1000,show_eyelink_fixations = TRUE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = FALSE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(90,1400), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
 
 plot_1000
 ```
@@ -278,33 +280,49 @@ plot_1000
 ```{r plot_250_hz_trial_eyelink_EK}
 #| message: false
 #| echo: false
-#| cache: true
+#| cache: false
 #| warning: false
 #| fig.cap: "Example trial at 250 Hz"
 #| fig.align: "center"
 #| fig.width: 9
-#| fig.height: 2.2
+#| fig.height: 2
 
 sub250 <- qread("../../sampling_rate_subjects_250.qs")
 
-plot_250 <- plot_trial(sub250[[31]], trial_nr = 27, 
-           show_original_samples = TRUE,show_downsampled_samples = FALSE,downsampling_rate = 250,show_eyelink_fixations = TRUE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = FALSE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(90,1200), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
+# this subject must have the same trials at 250 Hz that the example subject had at 1000 Hz
+example_sub_nr_for_250 <- 8
+
+example_itemN_for_250 = sub1000[[example_sub_nr]]$trial_db[example_trial_nr,]$itemN
+
+trial_nr_for_250 <- which(sub250[[example_sub_nr_for_250]]$trial_db$itemN == example_itemN_for_250)
+
+# help for finding subjects who have this trial
+#for(i in 1:32){
+#   cat(i, ": ", which(sub250[[i]]$trial_db$itemN == example_itemN_for_250), ", ", sep = "")}
+
+if (length(trial_nr_for_250) == 0) {
+  trial_nr_for_250 = 1
+  warning("Trial not found in 250 Hz data for this subject, using first trial instead")
+}
+
+plot_250 <- plot_trial(sub250[[example_sub_nr_for_250]], trial_nr = trial_nr_for_250, 
+           show_original_samples = TRUE,show_downsampled_samples = FALSE,downsampling_rate = 250,show_eyelink_fixations = TRUE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = FALSE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(90,1300), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
 
 plot_250
 ```
 
 ```{r plot_1000_hz_trial_downsampled_with_fixations}
 #| echo: false
-#| cache: true
+#| cache: false
 #| message: false
 #| warning: false
 #| fig.cap: "1000 Hz trial downsampled to 50 Hz"
 #| fig.align: "center"
 #| fig.width: 9
-#| fig.height: 2.2
+#| fig.height: 2
 
 plot_1000_downsampled <- plot_trial(sub1000[[example_sub_nr]], trial_nr = example_trial_nr, 
-           show_original_samples = FALSE,show_downsampled_samples = TRUE,downsampling_rate = 50,show_eyelink_fixations = FALSE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = TRUE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(90,1200), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
+           show_original_samples = FALSE,show_downsampled_samples = TRUE,downsampling_rate = 50,show_eyelink_fixations = FALSE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = TRUE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(90,1400), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
  
 
 plot_1000_downsampled
