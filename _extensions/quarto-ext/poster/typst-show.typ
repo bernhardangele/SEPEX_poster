@@ -42,6 +42,9 @@
   // Any URL, like a link to the conference website.
   $if(footer-url)$ footer_url: [$footer-url$], $endif$
 
+  // Any URL, like a link to the conference website.
+  $if(footer-image)$ footer_image: "$footer-image$", $endif$
+
   // Emails of the authors.
   $if(footer-emails)$ footer_email_ids: [$footer-emails$], $endif$
 

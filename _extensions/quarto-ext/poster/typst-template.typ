@@ -33,6 +33,9 @@
 
   // Any URL, like a link to the conference website.
   footer_url: "Footer URL",
+  
+  // Image to be shown in the footer
+  footer_image: "",
 
   // Email IDs of the authors.
   footer_email_ids: "Email IDs (separated by commas)",
@@ -123,7 +126,7 @@
         [
           #text(size: footer_text_font_size, fill: rgb(footer_text_color), smallcaps(footer_text)) 
           #h(1fr) 
-          #text(font: poster_font, fill: rgb(footer_text_color), size: footer_url_font_size, footer_url) 
+          #text(font: poster_font, fill: rgb(footer_text_color), size: footer_url_font_size, footer_url)
           #h(1fr) 
           #text(font: poster_font, fill: rgb(footer_text_color), size:  footer_url_font_size, footer_email_ids)
         ]
