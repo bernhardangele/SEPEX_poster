@@ -266,8 +266,8 @@ mean_freq <- sentences_words_espal %>% filter(target_word == TRUE) %>% group_by(
 
 sub1000 <- qread("../../sampling_rate_subjects_1000.qs")
 
-example_sub_nr = 27
-example_trial_nr = 59
+example_sub_nr = 20
+example_trial_nr = 80
 
 plot_1000 <- plot_trial(sub1000[[example_sub_nr]], trial_nr = example_trial_nr, 
            show_original_samples = TRUE,show_downsampled_samples = FALSE,downsampling_rate = 1000,show_eyelink_fixations = TRUE, show_EK_fixations = FALSE, show_EK_fixations_downsampled = FALSE,show_words = TRUE,show_word_boundaries = TRUE,x_limits = c(90,1400), y_limits = c(650,450), letter_width = 12, words_font_size = 3) + theme_classic()
@@ -288,15 +288,17 @@ plot_1000
 sub250 <- qread("../../sampling_rate_subjects_250.qs")
 
 # this subject must have the same trials at 250 Hz that the example subject had at 1000 Hz
-example_sub_nr_for_250 <- 11
+example_sub_nr_for_250 <- 8
 
 example_itemN_for_250 <- sub1000[[example_sub_nr]]$trial_db[example_trial_nr,]$itemN
+
+example_cond_for_250 <- sub1000[[example_sub_nr]]$trial_db[example_trial_nr,]$cond
 
 trial_nr_for_250 <- which(sub250[[example_sub_nr_for_250]]$trial_db$itemN == example_itemN_for_250)
 
 # help for finding subjects who have this trial
-#for(i in 1:32){
-#   cat(i, ": ", which(sub250[[i]]$trial_db$itemN == example_itemN_for_250), ", ", sep = "")}
+# for(i in 1:32){
+#    cat(i, ": ", which(sub250[[i]]$trial_db$itemN == example_itemN_for_250 & sub250[[i]]$trial_db$cond == example_cond_for_250), ", ", sep = "")}
 
 if (length(trial_nr_for_250) == 0) {
   trial_nr_for_250 = 1
